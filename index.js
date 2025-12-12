@@ -26,6 +26,24 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    const db=client.db('contesthub_db')
+    const contestColl=db.collection('contestCollection')
+//  constest api
+    app.get('/contest',async(req,res)=>{
+        const query={}
+        const {email}=req.query
+        const cursor=contestColl.find(query)
+        const result=await cursor.toArray()
+        res.send(result)
+    })
+
+    app.post("/contest", async(req,res)=>{
+        const contest=req.body
+        const result=await contestColl.insertOne(contest)
+        res.send(result)
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
