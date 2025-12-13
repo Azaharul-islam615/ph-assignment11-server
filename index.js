@@ -38,8 +38,20 @@ async function run() {
         res.send(result)
     })
 
+    app.get('/contest',async(req,res)=>{
+      const query={}
+      if(req.query.status){
+        query.status=req.query.status
+      }
+      const cursor=contestColl.find(query)
+      const result=await cursor.toArray()
+      res.send(result)
+    })
+
     app.post("/contest", async(req,res)=>{
         const contest=req.body
+        contest.status='pending'
+        contest.createdAt=new Date()
         const result=await contestColl.insertOne(contest)
         res.send(result)
     })
