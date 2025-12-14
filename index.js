@@ -41,15 +41,15 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/contest', async (req, res) => {
-      const query = {}
-      if (req.query.status) {
-        query.status = req.query.status
-      }
-      const cursor = contestColl.find(query)
-      const result = await cursor.toArray()
-      res.send(result)
-    })
+    // app.get('/contest', async (req, res) => {
+    //   const query = {}
+    //   if (req.query.status) {
+    //     query.status = req.query.status
+    //   }
+    //   const cursor = contestColl.find(query)
+    //   const result = await cursor.toArray()
+    //   res.send(result)
+    // })
 
     app.post("/contest", async (req, res) => {
       const contest = req.body
@@ -72,8 +72,8 @@ async function run() {
 
       try {
         const result = await contestColl.updateOne(
-          { _id: new ObjectId(id) },  // কোন contest update হবে
-          { $set: updatedData }       // পাঠানো data দিয়ে update
+          { _id: new ObjectId(id) }, 
+          { $set: updatedData }       
         );
 
         res.send(result); // MongoDB result return করবে
@@ -94,6 +94,28 @@ async function run() {
 
        
     });
+    app.patch('/contests/:id',async(req,res)=>{
+      const status=req.body.status
+      const id=req.params.id
+      const query={_id:new ObjectId(id)}
+      const updateDoc={
+        $set:{
+          status:status
+        }
+      }
+      const result=await contestColl.updateOne(query,updateDoc)
+      if(status==='approved'){
+        const email=req.body.email
+        const useQuery={email}
+        const updateUser={
+          $set:{
+            role:'contestCreator'
+          }
+        }
+        const userResult=await contestColl.updateOne(useQuery,updateUser)
+      }
+      res.send(result)
+    })
 
 
 
