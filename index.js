@@ -1,7 +1,9 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SCRETE);
+
 const app = express()
 const port = process.env.PORT || 3000
 
@@ -32,9 +34,12 @@ async function run() {
     //  constest api
     app.get('/contest', async (req, res) => {
       const query = {}
-      const { email } = req.query
+      const { email, status } = req.query
       if (email) {
         query.email = email; 
+      }
+      if (status) {
+        query.status = status;
       }
       const cursor = contestColl.find(query)
       const result = await cursor.toArray()
@@ -42,14 +47,17 @@ async function run() {
     })
 
     // app.get('/contest', async (req, res) => {
-    //   const query = {}
-    //   if (req.query.status) {
-    //     query.status = req.query.status
+    //   const { status } = req.query;
+
+    //   const query = {};
+    //   if (status) {
+    //     query.status = status;  
     //   }
-    //   const cursor = contestColl.find(query)
-    //   const result = await cursor.toArray()
-    //   res.send(result)
-    // })
+
+    //   const result = await contestColl.find(query).toArray();
+    //   res.send(result);
+    // });
+
 
     app.post("/contest", async (req, res) => {
       const contest = req.body
@@ -116,6 +124,40 @@ async function run() {
       }
       res.send(result)
     })
+   
+
+    // payment related api
+
+    app.post('/create-checkout-session', async (req, res) => {
+      const paymentInfo=req.body
+      const amount=parseInt(paymentInfo.price)*100;
+      const session = await stripe.checkout.sessions.create({
+        line_items: [
+          {
+           
+           price_data:{
+            currency:'USD',
+            unit_amount:amount,
+            product_data:{
+              name:paymentInfo.name
+            },
+           },
+           
+            quantity: 1,
+          },
+        ],
+        customer_email: paymentInfo.email,
+        mode: 'payment',
+        metadata:{
+          contestId:paymentInfo.contestId
+        },
+        success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
+        cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`
+      });
+
+     console.log(session)
+      res.send({ url: session.url })
+    });
 
 
 
