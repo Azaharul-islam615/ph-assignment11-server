@@ -154,7 +154,8 @@ async function run() {
           contestId: paymentInfo.contestId,
           prizeMoney: prize_money,
           name: paymentInfo.name,
-          deadline: paymentInfo.deadline
+          deadline: paymentInfo.deadline,
+          userName: paymentInfo.userName
         },
         mode: 'payment',
         customer_email: paymentInfo.customer_email,
@@ -172,7 +173,7 @@ async function run() {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       const transactionId = session.payment_intent
       
-      const query = {transactionId:transactionId }
+      const query = { transactionId: transactionId }
       const paymentExist = await paymentColl.findOne(query)
       if(paymentExist){
         return res.send({ message: 'already exist', transactionId })
@@ -198,6 +199,7 @@ async function run() {
           deadline: session.metadata.deadline,
           paymentStatus:session.payment_status,
           transactionId:session.payment_intent,
+          userName: session.metadata.userName,
           paidAt:new Date()
         }
         if(session.payment_status==='paid'){
@@ -219,6 +221,52 @@ async function run() {
       const result=await cursor.toArray()
       res.send(result)
     })
+    app.patch('/payments/:id', async (req, res) => {
+  const { id } = req.params;
+  const { submittedTask } = req.body;
+
+  const result = await paymentColl.updateOne(
+    { _id: new ObjectId(id) },
+    {
+      $set: {
+        submittedTask: submittedTask
+      }
+    }
+  );
+
+  res.send(result);
+});
+    app.patch("/payments/declare-winner/:id", async (req, res) => {
+      const { contestId } = req.body;
+      const paymentId = req.params.id;
+
+      // Step 1: check if winner already exists
+      const winnerExists = await paymentColl.findOne({
+        contestId,
+        isWinner: true
+      });
+
+      if (winnerExists) {
+        return res.status(400).send({
+          message: "Winner already declared for this contest"
+        });
+      }
+
+      // Step 2: set isWinner dynamically
+      const result = await paymentColl.updateOne(
+        { _id: new ObjectId(paymentId) },
+        {
+          $set: {
+            isWinner: true,
+            winnerDeclaredAt: new Date()
+          }
+        }
+      );
+
+      res.send(result);
+    });
+
+
 
 
 
