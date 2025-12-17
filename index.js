@@ -75,6 +75,18 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/users/:id',async(req,res)=>{
+
+    })
+
+    app.get('/users/:email/role',async(req,res)=>{
+      const email=req.params.email
+      const query={email}
+      const user=await userColl.findOne(query)
+      res.send({role:user?.role ||'user'})
+
+    })
+
     app.post('/users', async (req, res) => {
       const user = req.body;
       user.role = 'user'
@@ -137,6 +149,8 @@ async function run() {
       const result = await contestColl.insertOne(contest)
       res.send(result)
     })
+
+
     app.get('/contest/:id', async (req, res) => {
       const id = req.params.id;
       const result = await contestColl.findOne({
@@ -144,6 +158,8 @@ async function run() {
       });
       res.send(result);
     });
+
+
     // Update contest by id
     app.patch("/contest/:id", async (req, res) => {
       const { id } = req.params;      // URL থেকে id নাও
