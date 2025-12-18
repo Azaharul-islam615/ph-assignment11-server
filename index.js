@@ -212,6 +212,11 @@ app.get('/leaderboard',async(req,res)=>{
       res.send({result,total:count})
 
     })
+    app.get('/popular',async(req,res)=>{
+      const cursor = contestColl.find().limit(5).sort({ participants :-1})
+      const result=await cursor.toArray()
+      res.send(result)
+    })
 
     // app.get('/contest', async (req, res) => {
     //   const { status } = req.query;
@@ -460,6 +465,18 @@ app.get('/leaderboard',async(req,res)=>{
     app.get('/public-winners', async (req, res) => {
       const winners = await paymentColl.find({ isWinner: true }).toArray();
       res.send(winners);
+    });
+
+
+   
+    app.get('/contests/search', async (req, res) => {
+      const { type } = req.query;
+      let query = {}; 
+      if (type) {
+        query.type = { $regex: type, $options: "i" };
+      }
+      const contests = await contestColl.find(query).toArray();
+      res.send(contests);
     });
 
 
