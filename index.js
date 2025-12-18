@@ -75,6 +75,26 @@ const verifyAdmin=async(req,res,next)=>{
   next()
 }
 
+// api for pie chart from paymentcoll
+
+    // server side
+    app.get('/users/stats/:email', async (req, res) => {
+      const email = req.params.email;
+
+      const participated = await paymentColl.countDocuments({
+        customerEmail: email
+      });
+
+      const won = await paymentColl.countDocuments({
+        customerEmail: email,
+        isWinner: true
+      });
+
+      res.send({
+        participated,
+        won
+      });
+    });
 
 
     // user ralatated api
@@ -121,6 +141,44 @@ const verifyAdmin=async(req,res,next)=>{
       const result = await userColl.updateOne(query, updateDoc)
       res.send(result)
     })
+
+
+
+    // get user profile by email
+    app.get('/users/profile/:email', async (req, res) => {
+      const email = req.params.email;
+
+      const user = await userColl.findOne({ email });
+
+      if (!user) {
+        return res.status(404).send({ message: 'User not found' });
+      }
+
+      res.send(user);
+    });
+
+
+    // update user profile by email
+    app.patch('/users/profile/:email', async (req, res) => {
+      const email = req.params.email;
+      const updatedInfo = req.body;
+
+      const result = await userColl.updateOne(
+        { email },
+        {
+          $set: {
+            displayName: updatedInfo.displayName,
+            photoURL: updatedInfo.photoURL,
+            
+            bio: updatedInfo.bio,
+            updatedAt: new Date()
+          }
+        }
+      );
+
+      res.send(result);
+    });
+
 
 
     //  constest api
