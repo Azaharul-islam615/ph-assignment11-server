@@ -75,6 +75,14 @@ const verifyAdmin=async(req,res,next)=>{
   next()
 }
 
+
+// api for leaderboard
+app.get('/leaderboard',async(req,res)=>{
+  const cursor=paymentColl.find()
+  const result=await cursor.toArray()
+  res.send(result)
+})
+
 // api for pie chart from paymentcoll
 
     // server side
@@ -194,6 +202,15 @@ const verifyAdmin=async(req,res,next)=>{
       const cursor = contestColl.find(query)
       const result = await cursor.toArray()
       res.send(result)
+    })
+
+    app.get('/pagination',async(req,res)=>{
+      const {limit=0,skip=0}=req.query
+      const cursor = contestColl.find().limit(Number(limit)).skip(Number(skip))
+      const result = await cursor.toArray()
+      const count=await contestColl.countDocuments()
+      res.send({result,total:count})
+
     })
 
     // app.get('/contest', async (req, res) => {
