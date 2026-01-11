@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require('stripe')(process.env.STRIPE_SCRETE);
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -67,26 +67,26 @@ async function run() {
     const paymentColl = db.collection('payment')
     const userColl = db.collection('users')
 
-//  middleware with database access
-const verifyAdmin=async(req,res,next)=>{
-  const email=req.decoded_email
-  const query={email}
-  const user=await userColl.findOne(query)
-  if(!user || user.role !=='admin'){
-    return res.status(403).send({message:'forbidden access'})
-  }
-  next()
-}
+    //  middleware with database access
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded_email
+      const query = { email }
+      const user = await userColl.findOne(query)
+      if (!user || user.role !== 'admin') {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+      next()
+    }
 
 
-// api for leaderboard
-app.get('/leaderboard',async(req,res)=>{
-  const cursor=paymentColl.find()
-  const result=await cursor.toArray()
-  res.send(result)
-})
+    // api for leaderboard
+    app.get('/leaderboard', async (req, res) => {
+      const cursor = paymentColl.find()
+      const result = await cursor.toArray()
+      res.send(result)
+    })
 
-// api for pie chart from paymentcoll
+    // api for pie chart from paymentcoll
 
     // server side
     app.get('/users/stats/:email', async (req, res) => {
@@ -115,15 +115,15 @@ app.get('/leaderboard',async(req,res)=>{
       res.send(result)
     })
 
-    app.get('/users/:id',async(req,res)=>{
+    // app.get('/users/:id',async(req,res)=>{
+    //   // TODO: Implement user by ID endpoint
+    // })
 
-    })
-
-    app.get('/users/:email/role',async(req,res)=>{
-      const email=req.params.email
-      const query={email}
-      const user=await userColl.findOne(query)
-      res.send({role:user?.role ||'user'})
+    app.get('/users/:email/role', async (req, res) => {
+      const email = req.params.email
+      const query = { email }
+      const user = await userColl.findOne(query)
+      res.send({ role: user?.role || 'user' })
 
     })
 
@@ -140,7 +140,7 @@ app.get('/leaderboard',async(req,res)=>{
       res.send(result)
     })
 
-    app.patch('/users/:id/role',verifyFBToken,verifyAdmin, async (req, res) => {
+    app.patch('/users/:id/role', verifyFBToken, verifyAdmin, async (req, res) => {
       const id = req.params.id
       const roleInfo = req.body
       const query = { _id: new ObjectId(id) }
@@ -180,7 +180,7 @@ app.get('/leaderboard',async(req,res)=>{
           $set: {
             displayName: updatedInfo.displayName,
             photoURL: updatedInfo.photoURL,
-            
+
             bio: updatedInfo.bio,
             updatedAt: new Date()
           }
@@ -207,17 +207,17 @@ app.get('/leaderboard',async(req,res)=>{
       res.send(result)
     })
 
-    app.get('/pagination',async(req,res)=>{
-      const {limit=0,skip=0}=req.query
+    app.get('/pagination', async (req, res) => {
+      const { limit = 0, skip = 0 } = req.query
       const cursor = contestColl.find().limit(Number(limit)).skip(Number(skip))
       const result = await cursor.toArray()
-      const count=await contestColl.countDocuments()
-      res.send({result,total:count})
+      const count = await contestColl.countDocuments()
+      res.send({ result, total: count })
 
     })
-    app.get('/popular',async(req,res)=>{
-      const cursor = contestColl.find().limit(5).sort({ participants :-1})
-      const result=await cursor.toArray()
+    app.get('/popular', async (req, res) => {
+      const cursor = contestColl.find().limit(8).sort({ participants: -1 })
+      const result = await cursor.toArray()
       res.send(result)
     })
 
@@ -299,7 +299,7 @@ app.get('/leaderboard',async(req,res)=>{
             role: 'contestCreator'
           }
         }
-        const userResult = await contestColl.updateOne(useQuery, updateUser)
+        await userColl.updateOne(useQuery, updateUser)
       }
       res.send(result)
     })
@@ -471,10 +471,10 @@ app.get('/leaderboard',async(req,res)=>{
     });
 
 
-   
+
     app.get('/contests/search', async (req, res) => {
       const { type } = req.query;
-      let query = {}; 
+      let query = {};
       if (type) {
         query.type = { $regex: type, $options: "i" };
       }
